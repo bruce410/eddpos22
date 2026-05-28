@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EDDMOBI POS - Point of Sale System</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      overflow: hidden;
+    }
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    .header h2 { font-size: 24px; margin-bottom: 5px; }
+    .header p { font-size: 14px; opacity: 0.9; }
+
+    /* LOGIN & REGISTER */
+    #login, #register {
+      max-width: 400px;
+      margin: 40px auto;
+      padding: 30px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+    #login h3, #register h3 { margin-bottom: 20px; color: #333; text-align: center; }
+    .login-group { margin-bottom: 15px; }
+    .login-group input {
+      width: 100%; padding: 10px; border: 1px solid #ddd;
+      border-radius: 5px; font-size: 14px;
+    }
+    .login-group input:focus {
+      outline: none; border-color: #667eea;
+      box-shadow: 0 0 5px rgba(102, 126, 234, 0.2);
+    }
+    .login-btn {
+      width: 100%; padding: 10px; background: #667eea;
+      color: white; border: none; border-radius: 5px;
+      font-size: 16px; font-weight: bold; cursor: pointer;
+      transition: background 0.3s;
+    }
+    .login-btn:hover { background: #764ba2; }
+    .toggle-auth { text-align: center; margin-top: 15px; }
+    .toggle-auth a { color: #667eea; cursor: pointer; text-decoration: underline; }
+
+    /* DEBUG PANEL */
+    #debugPanel {
+      max-width: 800px;
+      margin: 20px auto;
+      background: #1e1e1e;
+      color: #d4d4d4;
+      border-radius: 8px;
+      padding: 15px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    #debugPanel .log-info { color: #4fc1ff; }
+    #debugPanel .log-success { color: #4ec9b0; }
+    #debugPanel .log-error { color: #f48771; }
+    #debugPanel .log-warn { color: #dcdcaa; }
+
+    /* APP */
+    #app { display: none; padding: 20px; }
+    .top-bar {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 15px; flex-wrap: wrap; gap: 10px;
+    }
+    .user-info { font-size: 14px; color: #667eea; font-weight: bold; }
+    .role-badge {
+      display: inline-block; padding: 2px 8px; border-radius: 12px;
+      font-size: 11px; margin-left: 8px; color: white;
+    }
+    .role-admin { background: #28a745; }
+    .role-sales { background: #17a2b8; }
+    .logout-btn {
+      padding: 8px 15px; background: #dc3545; color: white;
+      border: none; border-radius: 5px; cursor: pointer;
+    }
+    .section { margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
+    .section:last-child { border-bottom: none; }
+    .section h3 {
+      color: #333; margin-bottom: 15px; font-size: 18px;
+      border-bottom: 2px solid #667eea; padding-bottom: 10px;
+    }
+    .form-group {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px; margin-bottom: 15px;
+    }
+    input, select, button {
+      padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;
+    }
+    button { background: #667eea; color: white; border: none; cursor: pointer; font-weight: bold; }
+    button:hover { background: #764ba2; }
+    button.success { background: #28a745; }
+    button.danger { background: #dc3545; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+    th { background: #667eea; color: white; }
+    tr:nth-child(even) { background: #f9f9f9; }
+    .action-btn { padding: 5px 10px; margin: 2px; font-size: 12px; cursor: pointer; }
+    .edit-btn { background: #ffc107; color: black; }
+    .delete-btn { background: #dc3545; color: white; }
+    #output, #receipt {
+      background: #f5f5f5; border: 1px solid #ddd; padding: 15px;
+      border-radius: 5px; margin-top: 15px; font-family: 'Courier New', monospace;
+      white-space: pre-wrap; word-wrap: break-word; max-height: 400px; overflow-y: auto;
+    }
+    .alert {
+      padding: 12px; margin-bottom: 15px; border-radius: 5px; font-size: 14px;
+    }
+    .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .alert-danger { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    .alert-warning { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; }
+    .stat-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white; padding: 20px; border-radius: 5px; text-align: center;
+    }
+    .stat-card h4 { font-size: 12px; opacity: 0.9; margin-bottom: 10px; }
+    .stat-card .value { font-size: 24px; font-weight: bold; }
+    .tab-btn.hidden { display: none; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .tabs {
+      display: flex; gap: 10px; margin-bottom: 20px;
+      border-bottom: 2px solid #eee; flex-wrap: wrap;
+    }
+    .tab-btn {
+      padding: 10px 20px; background: none; border: none; color: #666;
+      cursor: pointer; font-size: 14px; font-weight: bold;
+      border-bottom: 3px solid transparent;
+    }
+    .tab-btn.active { color: #667eea; border-bottom-color: #667eea; }
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+    .modal.active { display: flex; }
+    .modal-content { background: white; padding: 30px; border-radius: 10px; max-width: 500px; width: 90%; }
+    .modal-buttons { margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end; }
+    .user-card {
+      background: #f8f9fa; border: 1px solid #dee2e6;
+      border-radius: 8px; padding: 15px; margin-bottom: 10px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .user-card .user-name { font-weight: bold; color: #333; }
+    .user-card .user-role {
+      display: inline-block; padding: 2px 8px; border-radius: 12px;
+      font-size: 11px; color: white; margin-left: 8px;
+    }
+    .admin-only-section { display: none; }
+    @media (max-width: 768px) {
+      .form-group { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: 1fr; }
+    }
+  </style>
+<base target="_blank">
+</head> 
+<body>
+
+<div class="container">
+  <div class="header">
+    <h2>� EDDMOBI POS</h2>
+    <p>Point of Sale System |  0722540912</p>
+  </div>
+
+  <!-- DEBUG PANEL -->
+  <div id="debugPanel">
+    <div style="color:#fff; font-weight:bold; margin-bottom:10px;"> DEBUG LOG</div>
+    <div id="debugLogs"></div>
+  </div>
+
+  <!-- LOGIN -->
+  <div id="login">
+    <h3>Staff Login</h3>
+    <div class="login-group">
+      <input id="loginEmail" type="email" placeholder="Email address" autocomplete="email">
+    </div>
+    <div class="login-group">
+      <input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password">
+    </div>
+    <button class="login-btn" onclick="login()">Login</button>
+    <div class="toggle-auth">
+      <p>Don't have an account? <a onclick="showRegister()">Register Business</a></p>
+    </div>
+  </div>
+
+  <!-- REGISTER -->
+  <div id="Register" style="display:none;">
+    <h3>Register Your Business</h3>
+    <div class="login-group">
+      <input id="bizName" placeholder="Business Name">
+    </div>
+    <div class="login-group">
+      <input id="bizEmail" type="email" placeholder="Admin Email">
+    </div>
+    <div class="login-group">
+      <input id="bizPassword" type="password" placeholder="Password (min 6 chars)">
+    </div>
+    <button class="login-btn" onclick="registerBusiness()">Create Account</button>
+    <div class="toggle-auth">
+      <p>Already have an account? <a onclick="showLogin()">Login</a></p>
+    </div>
+  </div>
+
+  <!-- APP -->
+  <div id="app" style="display:none;">
+    <div class="top-bar">
+      <div class="user-info">
+     <span id="currentUserName">User</span>
+        <span id="currentUserRole" class="role-badge">Role</span>
+        <span id="orgName" style="margin-left:10px; color:#666; font-weight:normal;"></span>
+      </div>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+    <div id="alertBox"></div>
+
+    <div class="tabs" id="mainTabs">
+      <button class="tab-btn active" onclick="switchTab('dashboard', this)">Dashboard</button>
+      <button class="tab-btn" onclick="switchTab('products', this)">Products</button>
+      <button class="tab-btn" onclick="switchTab('sales', this)">Sales</button>
+      <button class="tab-btn" onclick="switchTab('expenses', this)">Expenses</button>
+      <button class="tab-btn" onclick="switchTab('reports', this)">Reports</button>
+      <button class="tab-btn admin-only" onclick="switchTab('users', this)">👥 Users</button>
+    </div>
+
+    <div id="dashboard" class="tab-content active">
+      <div class="section">
+        <h3>Dashboard</h3>
+        <div class="stats">
+          <div class="stat-card"><h4>Total Products</h4><div class="value" id="totalProducts">0</div></div>
+          <div class="stat-card"><h4>Total Stock Value</h4><div class="value" id="totalStockValue">KES 0</div></div>
+          <div class="stat-card"><h4>Today's Sales</h4><div class="value" id="todaySales">KES 0</div></div>
+          <div class="stat-card"><h4>Today's Profit</h4><div class="value" id="todayProfit">KES 0</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="products" class="tab-content">
+      <div class="section admin-only-section">
+        <h3> Add New Product</h3>
+        <div class="form-group">
+          <input id="pname" placeholder="Product name">
+          <input id="buy" type="number" placeholder="Buying price" min="0" step="0.01">
+          <input id="sell" type="number" placeholder="Selling price" min="0" step="0.01">
+          <input id="stock" type="number" placeholder="Initial stock" min="0">
+          <button onclick="addProduct()">Add Product</button>
+        </div>
+      </div>
+      <div class="section">
+        <h3>Product Stock</h3>
+        <table id="stockTable"></table>
+      </div>
+    </div>
+
+    <div id="sales" class="tab-content">
+      <div class="section">
+        <h3>Make a Sale</h3>
+        <div class="form-group">
+          <select id="productSelect"></select>
+          <input id="qty" type="number" placeholder="Quantity" min="1">
+          <input id="customPrice" type="number" placeholder="Custom price (optional)" min="0" step="0.01">
+          <input id="discount" type="number" placeholder="Discount" min="0" step="0.01" value="0">
+          <input id="customer" placeholder="Customer name (optional)">
+          <select id="payment"><option>Cash</option><option>M-Pesa</option><option>Cheque</option><option>Credit</option></select>
+          <button class="success" onclick="sell()">Complete Sale</button>
+        </div>
+      </div>
+      <div class="section">
+        <h3>Recent Sales</h3>
+        <table id="recentSalesTable"></table>
+      </div>
+      <div id="receipt"></div>
+    </div>
+
+    <div id="expenses" class="tab-content">
+      <div class="section admin-only-section">
+        <h3>Record Expense</h3>
+        <div class="form-group">
+          <input id="expenseName" placeholder="Expense description">
+          <input id="expenseAmount" type="number" placeholder="Amount" min="0" step="0.01">
+          <button onclick="addExpense()">Add Expense</button>
+        </div>
+      </div>
+      <div class="section">
+        <h3> Expense Log</h3>
+        <table id="expensesTable"></table>
+      </div>
+    </div>
+
+    <div id="reports" class="tab-content">
+      <div class="section">
+        <h3> Generate Report</h3>
+        <div class="form-group">
+          <button class="success" onclick="generateDailyReport()">Daily Report</button>
+          <button class="success" onclick="generateMonthlyReport()">Monthly Report</button>
+          <button class="success admin-only-btn" onclick="generateAnnualReport()">Annual Report</button>
+          <button class="admin-only-btn" onclick="exportToCSV()">Export to CSV</button>
+        </div>
+      </div>
+      <div class="section"><pre id="output"></pre></div>
+    </div>
+
+    <div id="users" class="tab-content">
+      <div class="section">
+        <h3> Add New Staff Member</h3>
+        <div class="alert alert-warning">
+          <strong>Note:</strong> Creating staff will log you out. Login again after.
+        </div>
+        <div class="form-group">
+          <input id="newUsername" placeholder="Display name">
+          <input id="newEmail" type="email" placeholder="Staff Email">
+          <input id="newPassword" type="password" placeholder="Temporary Password">
+          <select id="newRole"><option value="sales">Sales Staff</option><option value="admin">Admin</option></select>
+          <button class="success" onclick="addUser()">Create Staff Account</button>
+        </div>
+      </div>
+      <div class="section">
+        <h3>👥 Staff Members</h3>
+        <div id="usersList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="confirmModal" class="modal">
+  <div class="modal-content">
+    <h4>Confirm Action</h4>
+    <p id="confirmMessage"></p>
+    <div class="modal-buttons">
+      <button onclick="cancelConfirm()">Cancel</button>
+      <button class="danger" onclick="executeConfirm()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<div id="editModal" class="modal">
+  <div class="modal-content">
+    <h4>Edit Product</h4>
+    <div class="form-group" style="display: block;">
+      <input id="editPname" placeholder="Product name" style="margin-bottom:10px; width:100%;">
+      <input id="editBuy" type="number" placeholder="Buying price" style="margin-bottom:10px; width:100%;">
+      <input id="editSell" type="number" placeholder="Selling price" style="margin-bottom:10px; width:100%;">
+      <input id="editStock" type="number" placeholder="Stock" style="margin-bottom:10px; width:100%;">
+    </div>
+    <div class="modal-buttons">
+      <button onclick="closeEditModal()">Cancel</button>
+      <button class="success" onclick="saveProductEdit()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+
+<script>
+// ============= DEBUG LOGGER =============
+function debugLog(message, type = 'info') {
+  const consoleDiv = document.getElementById('debugLogs');
+  const timestamp = new Date().toLocaleTimeString();
+  const entry = document.createElement('div');
+  entry.className = `log-${type}`;
+  entry.textContent = `[${timestamp}] ${message}`;
+  consoleDiv.appendChild(entry);
+  consoleDiv.scrollTop = consoleDiv.scrollHeight;
+  if (type === 'error') console.error(message);
+  else if (type === 'warn') console.warn(message);
+  else console.log(message);
+}
+
+// ============= FIREBASE CONFIG =============
+const firebaseConfig = {
+    apiKey: "AIzaSyDVWr39GUNMF6d5ytjc7gH9XshS2LbP3vc",
+    authDomain: "edd2-58582.firebaseapp.com",
+    projectId: "edd2-58582",
+    storageBucket: "edd2-58582.firebasestorage.app",
+    messagingSenderId: "9804174722",
+    appId: "1:9804174722:web:528d298ce333316cbeab9b",
+    measurementId: "G-BQCF64RTVY"
+  };
+
+
+debugLog('Initializing Firebase...');
+
+try {
+  firebase.initializeApp(firebaseConfig);
+  debugLog('Firebase initialized OK', 'success');
+} catch (e) {
+  debugLog('Firebase init ERROR: ' + e.message, 'error');
+}
+
+const firestoredb = firebase.firestore();
+const auth = firebase.auth();
+
+// ============= ROLES =============
+const ROLES = { ADMIN: 'admin', SALES: 'sales' };
+
+const PERMISSIONS = {
+  [ROLES.ADMIN]: {
+    canAddProducts: true, canEditProducts: true, canDeleteProducts: true,
+    canAddExpenses: true, canDeleteExpenses: true, canDeleteSales: true,
+    canViewReports: true, canExportCSV: true, canViewAnnualReport: true,
+    canManageUsers: true, canViewBuyingPrice: true,
+    tabs: ['dashboard', 'products', 'sales', 'expenses', 'reports', 'users']
+  },
+  [ROLES.SALES]: {
+    canAddProducts: false, canEditProducts: false, canDeleteProducts: false,
+    canAddExpenses: false, canDeleteExpenses: false, canDeleteSales: false,
+    canViewReports: true, canExportCSV: false, canViewAnnualReport: false,
+    canManageUsers: false, canViewBuyingPrice: false,
+    tabs: ['dashboard', 'products', 'sales', 'reports']
+  }
+};
+
+// ============= STATE =============
+let currentUser = null;
+let currentOrg = null;
+let confirmAction = null;
+let editingProductId = null;
+let unsubscribeProducts = null;
+let unsubscribeSales = null;
+let unsubscribeExpenses = null;
+let isInitializing = false;
+
+// ============= UTILITIES =============
+function showAlert(message, type = 'success') {
+  const alertBox = document.getElementById('alertBox');
+  alertBox.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+  setTimeout(() => alertBox.innerHTML = '', 4000);
+} 
+
+function clearForm(inputIds) {
+  inputIds.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+}
+
+function formatCurrency(amount) {
+  if (amount === undefined || amount === null || isNaN(amount)) amount = 0;
+  return new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES' }).format(amount);
+}
+
+function formatDate(date) {
+  if (typeof date === 'string') date = new Date(date);
+  if (!(date instanceof Date) || isNaN(date)) date = new Date();
+  return date.toLocaleDateString('en-KE') + ' ' + date.toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' });
+}
+
+// ============= NAVIGATION =============
+function showLogin() {
+  document.getElementById('login').style.display = 'block';
+  document.getElementById('Register').style.display = 'none';
+  document.getElementById('app').style.display = 'none';
+}
+
+function showRegister() {
+  document.getElementById('login').style.display = 'none';
+  document.getElementById('Register').style.display = 'block';
+  document.getElementById('app').style.display = 'none';
+}
+
+function showApp() {
+  document.getElementById('login').style.display = 'none';
+  document.getElementById('Register').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+}
+
+// ============= REGISTRATION =============
+async function registerBusiness() {
+  debugLog('=== REGISTER STARTED ===');
+
+  const name = document.getElementById('bizName').value.trim();
+  const email = document.getElementById('bizEmail').value.trim().toLowerCase();
+  const password = document.getElementById('bizPassword').value;
+
+  if (!name || !email || !password) {
+    showAlert('Please fill all fields', 'danger');
+    return;
+  }
+
+  if (password.length < 6) {
+    showAlert('Password must be at least 6 characters', 'warning');
+    return;
+  }
+
+  try {
+
+    // CREATE AUTH USER
+    const cred = await auth.createUserWithEmailAndPassword(email, password);
+
+    const uid = cred.user.uid;
+
+    debugLog('Auth account created: ' + uid, 'success');
+
+    // CREATE ORGANIZATION
+    const orgRef = firestoredb.collection('organizations').doc();
+
+    await orgRef.set({
+      name: name,
+      ownerId: uid,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    debugLog('Organization created', 'success');
+
+    // CREATE USER PROFILE
+    await firestoredb.collection('users').doc(uid).set({
+      user: email.split('@')[0],
+      email: email,
+      role: 'admin',
+      orgId: orgRef.id,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    debugLog('User profile created in Firestore', 'success');
+
+    showAlert('Registration successful!', 'success');
+
+    clearForm(['bizName', 'bizEmail', 'bizPassword']);
+
+  } catch (err) {
+
+    debugLog('REGISTER ERROR: ' + err.message, 'error');
+
+    showAlert(err.message, 'danger');
+  }
+}
+
+// ============= LOGIN =============
+// CRITICAL FIX: login() ONLY does auth. NO UI logic here.
+// onAuthStateChanged is the SINGLE source of truth.
+function login() {
+  debugLog('=== LOGIN STARTED ===');
+
+  const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+  const password = document.getElementById('loginPassword').value;
+
+  debugLog('Email: ' + email);
+
+  if (!email || !password) {
+    showAlert('Please enter email and password', 'danger');
+    return;
+  }
+
+  debugLog('Calling signInWithEmailAndPassword...');
+
+  auth.signInWithEmailAndPassword(email, password)
+    .then(() => {
+      debugLog('signInWithEmailAndPassword returned OK', 'success');
+      // onAuthStateChanged will handle the rest - DO NOT add UI code here
+    })
+    .catch(err => {
+      debugLog('LOGIN ERROR: ' + err.code + ' | ' + err.message, 'error');
+      showAlert(err.message, 'danger');
+    });
+}
+
+function logout() {
+  if (confirm('Are you sure you want to logout?')) {
+    cleanupListeners();
+    currentUser = null;
+    currentOrg = null;
+    auth.signOut().then(() => {
+      showLogin();
+      clearForm(['loginEmail', 'loginPassword']);
+      showAlert('Logged out successfully', 'success');
+    }).catch(err => showAlert(err.message, 'danger'));
+  }
+}
+
+// ============= AUTH STATE LISTENER =============
+// THIS IS THE SINGLE SOURCE OF TRUTH FOR AUTH STATE
+auth.onAuthStateChanged(user => {
+  debugLog('=== onAuthStateChanged === User: ' + (user ? user.email : 'null'));
+
+  if (isInitializing) {
+    debugLog('Already initializing, skipping...', 'warn');
+    return;
+  }
+
+  if (user) {
+    isInitializing = true;
+    debugLog('Loading user profile from Firestore...');
+
+    firestoredb.collection('users').doc(user.uid).get()
+      .then(userDoc => {
+        if (!userDoc.exists) {
+          debugLog('ERROR: User profile NOT FOUND in Firestore!', 'error');
+          debugLog('This means: auth account exists but Firestore doc is missing', 'error');
+          debugLog('Try registering again or check Firestore rules', 'error');
+          throw new Error('Profile not found. Please re-register.');
+        }
+        const userData = userDoc.data();
+        debugLog('Profile loaded: ' + JSON.stringify(userData), 'success');
+        currentUser = { id: userDoc.id, ...userData };
+
+        return firestoredb.collection('organizations').doc(userData.orgId).get();
+      })
+      .then(orgDoc => {
+        if (orgDoc && orgDoc.exists) {
+          currentOrg = { id: orgDoc.id, ...orgDoc.data() };
+          document.getElementById('orgName').textContent = '🏪 ' + currentOrg.name;
+          debugLog('Org loaded: ' + currentOrg.name, 'success');
+        }
+
+        showApp();
+        applyRoleBasedUI();
+        setupRealtimeListeners();
+        updateDashboard();
+        showAlert(`Welcome, ${currentUser.user}! (${currentUser.role.toUpperCase()})`, 'success');
+        isInitializing = false;
+      })
+      .catch(err => {
+        isInitializing = false;
+        debugLog('Auth state ERROR: ' + err.message, 'error');
+        showAlert(err.message, 'danger');
+        auth.signOut();
+      });
+  } else {
+    debugLog('User signed out');
+    cleanupListeners();
+    currentUser = null;
+    currentOrg = null;
+    showLogin();
+  }
+});
+
+// ============= LISTENERS =============
+function setupRealtimeListeners() {
+  cleanupListeners();
+  if (!currentUser || !currentUser.orgId) return;
+
+  const orgId = currentUser.orgId;
+  debugLog('Setting up realtime listeners for org: ' + orgId);
+
+  unsubscribeProducts = firestoredb.collection('products')
+    .where('orgId', '==', orgId)
+    .onSnapshot(snapshot => {
+      renderProducts(snapshot);
+    }, err => debugLog('Products listener error: ' + err.message, 'error'));
+
+  unsubscribeSales = firestoredb.collection('sales')
+    .where('orgId', '==', orgId)
+    .orderBy('date', 'desc')
+    .limit(50)
+    .onSnapshot(snapshot => {
+      renderRecentSales(snapshot);
+    }, err => debugLog('Sales listener error: ' + err.message, 'error'));
+
+  unsubscribeExpenses = firestoredb.collection('expenses')
+    .where('orgId', '==', orgId)
+    .orderBy('date', 'desc')
+    .onSnapshot(snapshot => {
+      renderExpenses(snapshot);
+    }, err => debugLog('Expenses listener error: ' + err.message, 'error'));
+}
+
+function cleanupListeners() {
+  if (unsubscribeProducts) { unsubscribeProducts(); unsubscribeProducts = null; }
+  if (unsubscribeSales) { unsubscribeSales(); unsubscribeSales = null; }
+  if (unsubscribeExpenses) { unsubscribeExpenses(); unsubscribeExpenses = null; }
+}
+
+// ============= ROLE UI =============
+function applyRoleBasedUI() {
+  if (!currentUser) return;
+  const perms = PERMISSIONS[currentUser.role] || PERMISSIONS[ROLES.SALES];
+
+  document.getElementById('currentUserName').textContent = currentUser.user;
+  const roleBadge = document.getElementById('currentUserRole');
+  roleBadge.textContent = currentUser.role.toUpperCase();
+  roleBadge.className = 'role-badge role-' + currentUser.role;
+
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    const tabName = btn.getAttribute('onclick');
+    if (tabName) {
+      const match = tabName.match(/switchTab\('([^']+)'/);
+      if (match) {
+        btn.classList.toggle('hidden', !perms.tabs.includes(match[1]));
+      }
+    }
+  });
+
+  document.querySelectorAll('.admin-only-section').forEach(el => {
+    el.style.display = perms.canAddProducts || perms.canAddExpenses ? 'block' : 'none';
+  });
+
+  document.querySelectorAll('.admin-only-btn').forEach(el => {
+    el.style.display = perms.canExportCSV || perms.canViewAnnualReport ? 'inline-block' : 'none';
+  });
+}
+
+function hasPermission(permission) {
+  if (!currentUser) return false;
+  return (PERMISSIONS[currentUser.role] || PERMISSIONS[ROLES.SALES])[permission] === true;
+}
+
+function checkPermission(permission, actionName) {
+  if (!hasPermission(permission)) {
+    showAlert(`Access Denied: ${actionName} requires admin privileges.`, 'danger');
+    return false;
+  }
+  return true;
+}
+
+// ============= TABS =============
+function switchTab(tabName, btnElement) {
+  document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  const tab = document.getElementById(tabName);
+  if (tab) tab.classList.add('active');
+  if (btnElement) btnElement.classList.add('active');
+  if (tabName === 'dashboard') updateDashboard();
+  if (tabName === 'users' && hasPermission('canManageUsers')) loadUsers();
+}
+
+function updateDashboard() {
+  if (!currentUser || !currentUser.orgId) return;
+  let totalProducts = 0, stockValue = 0, todaySales = 0, todayProfit = 0;
+  const today = new Date().toDateString();
+  const orgId = currentUser.orgId;
+
+  firestoredb.collection('products').where('orgId', '==', orgId).get()
+    .then(snapshot => {
+      totalProducts = snapshot.size;
+      snapshot.forEach(doc => { const p = doc.data(); stockValue += (p.buy || 0) * (p.stock || 0); });
+      document.getElementById('totalProducts').textContent = totalProducts;
+      document.getElementById('totalStockValue').textContent = formatCurrency(stockValue);
+    }).catch(err => debugLog('Dashboard products error: ' + err.message, 'error'));
+
+  firestoredb.collection('sales').where('orgId', '==', orgId).get()
+    .then(snapshot => {
+      snapshot.forEach(doc => {
+        const s = doc.data();
+        const saleDate = s.date ? new Date(s.date.toDate ? s.date.toDate() : s.date).toDateString() : '';
+        if (saleDate === today) { todaySales += s.total || 0; todayProfit += s.profit || 0; }
+      });
+      document.getElementById('todaySales').textContent = formatCurrency(todaySales);
+      document.getElementById('todayProfit').textContent = formatCurrency(todayProfit);
+    }).catch(err => debugLog('Dashboard sales error: ' + err.message, 'error'));
+}
+
+// ============= USER MANAGEMENT =============
+async function addUser() {
+  if (!checkPermission('canManageUsers', 'Create user')) return;
+  if (!currentUser || !currentUser.orgId) return;
+
+  const username = document.getElementById('newUsername').value.trim().toLowerCase();
+  const email = document.getElementById('newEmail').value.trim().toLowerCase();
+  const password = document.getElementById('newPassword').value;
+  const role = document.getElementById('newRole').value;
+
+  if (!username || !email || !password) { showAlert('Please fill all fields', 'danger'); return; }
+  if (password.length < 6) { showAlert('Password must be at least 6 characters', 'warning'); return; }
+
+  debugLog('Creating staff via secondary Firebase app...');
+
+  try {
+    // Use secondary app so admin stays logged in
+    const secondaryApp = firebase.initializeApp(firebaseConfig, "Secondary" + Date.now());
+    const secondaryAuth = secondaryApp.auth();
+
+    const userCredential = await secondaryAuth.createUserWithEmailAndPassword(email, password);
+    debugLog('Staff auth created: ' + userCredential.user.uid, 'success');
+
+    await firestoredb.collection('users').doc(userCredential.user.uid).set({
+      user: username, email: email, role: role, orgId: currentUser.orgId,
+      createdBy: currentUser.user,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    await secondaryAuth.signOut();
+    await secondaryApp.delete();
+
+    showAlert('Staff account created!', 'success');
+    clearForm(['newUsername', 'newEmail', 'newPassword']);
+    loadUsers();
+  } catch (err) {
+    debugLog('ADD USER ERROR: ' + err.code + ' | ' + err.message, 'error');
+    showAlert(err.message, 'danger');
+  }
+}
+
+function loadUsers() {
+  if (!hasPermission('canManageUsers') || !currentUser || !currentUser.orgId) return;
+  document.getElementById('usersList').innerHTML = '<p>Loading...</p>';
+
+  firestoredb.collection('users').where('orgId', '==', currentUser.orgId).orderBy('createdAt', 'desc').get()
+    .then(snapshot => {
+      if (snapshot.empty) { document.getElementById('usersList').innerHTML = '<p>No users found.</p>'; return; }
+      let html = '';
+      snapshot.forEach(doc => {
+        const u = doc.data(), isCurrentUser = doc.id === currentUser.id;
+        const roleClass = u.role === 'admin' ? 'role-admin' : 'role-sales';
+        html += `<div class="user-card"><div class="user-details">
+          <span class="user-name">${u.user}</span>
+          <span class="user-role ${roleClass}">${u.role.toUpperCase()}</span>
+          ${isCurrentUser ? '<span style="color:#28a745;font-size:12px;"> (You)</span>' : ''}
+          <br><small style="color:#888;">Email: ${u.email || 'N/A'}</small>
+        </div></div>`;
+      });
+      document.getElementById('usersList').innerHTML = html;
+    })
+    .catch(err => { document.getElementById('usersList').innerHTML = '<p>Error loading users.</p>'; debugLog(err.message, 'error'); });
+}
+
+// ============= PRODUCTS =============
+function addProduct() {
+  if (!checkPermission('canAddProducts', 'Add product')) return;
+  if (!currentUser || !currentUser.orgId) return;
+
+  const name = document.getElementById('pname').value.trim();
+  const buy = parseFloat(document.getElementById('buy').value);
+  const sell = parseFloat(document.getElementById('sell').value);
+  const stock = parseInt(document.getElementById('stock').value) || 0;
+
+  if (!name || isNaN(buy) || isNaN(sell)) { showAlert('Fill all fields correctly', 'danger'); return; }
+  if (sell < buy) { showAlert('Selling price cannot be less than buying price', 'warning'); return; }
+
+  firestoredb.collection('products').add({
+    name, buy, sell, stock, orgId: currentUser.orgId,
+    createdBy: currentUser.user,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(() => { showAlert('Product added!', 'success'); clearForm(['pname','buy','sell','stock']); })
+    .catch(err => showAlert(err.message, 'danger'));
+}
+
+function renderProducts(snapshot) {
+  const stockTable = document.getElementById('stockTable');
+  const productSelect = document.getElementById('productSelect');
+  const perms = PERMISSIONS[currentUser.role] || PERMISSIONS[ROLES.SALES];
+
+  let tableHTML = `<tr><th>Name</th>${perms.canViewBuyingPrice ? '<th>Buy</th>' : ''}<th>Sell</th><th>Stock</th>${perms.canEditProducts || perms.canDeleteProducts ? '<th>Actions</th>' : ''}</tr>`;
+  let selectHTML = `<option value="">Select Product</option>`;
+
+  snapshot.forEach(doc => {
+    const p = doc.data(), docId = doc.id;
+    tableHTML += `<tr><td>${p.name || 'N/A'}</td>${perms.canViewBuyingPrice ? `<td>${formatCurrency(p.buy)}</td>` : ''}<td>${formatCurrency(p.sell)}</td><td>${p.stock || 0}</td>${perms.canEditProducts || perms.canDeleteProducts ? `<td>${perms.canEditProducts ? `<button class="action-btn edit-btn" onclick="editProduct('${docId}', '${p.name}', ${p.buy}, ${p.sell}, ${p.stock})">Edit</button>` : ''}${perms.canDeleteProducts ? `<button class="action-btn delete-btn" onclick="deleteProduct('${docId}', '${p.name}')">Delete</button>` : ''}</td>` : ''}</tr>`;
+    selectHTML += `<option value="${docId}">${p.name} (Stock: ${p.stock || 0})</option>`;
+  });
+
+  if (snapshot.size === 0) {
+    const colspan = 3 + (perms.canViewBuyingPrice ? 1 : 0) + (perms.canEditProducts || perms.canDeleteProducts ? 1 : 0);
+    tableHTML += `<tr><td colspan="${colspan}" style="text-align:center;">No products yet</td></tr>`;
+  }
+
+  stockTable.innerHTML = tableHTML;
+  productSelect.innerHTML = selectHTML;
+}
+
+function editProduct(id, name, buy, sell, stock) {
+  if (!checkPermission('canEditProducts', 'Edit product')) return;
+  editingProductId = id;
+  document.getElementById('editPname').value = name;
+  document.getElementById('editBuy').value = buy;
+  document.getElementById('editSell').value = sell;
+  document.getElementById('editStock').value = stock;
+  document.getElementById('editModal').classList.add('active');
+}
+
+function closeEditModal() { document.getElementById('editModal').classList.remove('active'); editingProductId = null; }
+
+function saveProductEdit() {
+  if (!checkPermission('canEditProducts', 'Edit product')) return;
+  const name = document.getElementById('editPname').value.trim();
+  const buy = parseFloat(document.getElementById('editBuy').value);
+  const sell = parseFloat(document.getElementById('editSell').value);
+  const stock = parseInt(document.getElementById('editStock').value) || 0;
+
+  if (!name || isNaN(buy) || isNaN(sell) || isNaN(stock)) { showAlert('Fill all fields', 'danger'); return; }
+  if (sell < buy) { showAlert('Selling price < buying price', 'warning'); return; }
+
+  firestoredb.collection('products').doc(editingProductId).update({
+    name, buy, sell, stock, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(() => { closeEditModal(); updateDashboard(); showAlert('Product updated!', 'success'); })
+    .catch(err => showAlert(err.message, 'danger'));
+}
+
+function deleteProduct(productId, productName) {
+  if (!checkPermission('canDeleteProducts', 'Delete product')) return;
+  confirmAction = () => {
+    firestoredb.collection('products').doc(productId).delete()
+      .then(() => { updateDashboard(); showAlert(`Product "${productName}" deleted`, 'success'); })
+      .catch(err => showAlert(err.message, 'danger'));
+  };
+  document.getElementById('confirmMessage').textContent = 'Delete this product?';
+  document.getElementById('confirmModal').classList.add('active');
+}
+
+// ============= SALES =============
+function sell() {
+  if (!currentUser || !currentUser.orgId) return;
+  const productId = document.getElementById('productSelect').value;
+  const qty = parseInt(document.getElementById('qty').value);
+  const customPrice = parseFloat(document.getElementById('customPrice').value) || 0;
+  const discount = parseFloat(document.getElementById('discount').value) || 0;
+  const customer = document.getElementById('customer').value.trim() || 'Walk-in';
+  const payment = document.getElementById('payment').value;
+
+  if (!productId || isNaN(qty) || qty < 1) { showAlert('Select product and valid quantity', 'danger'); return; }
+
+  firestoredb.collection('products').doc(productId).get()
+    .then(doc => {
+      if (!doc.exists) { showAlert('Product not found', 'danger'); return; }
+      const p = doc.data();
+      if (qty > p.stock) { showAlert(`Not enough stock. Available: ${p.stock}`, 'danger'); return; }
+
+      const unitPrice = customPrice > 0 ? customPrice : p.sell;
+      const subtotal = unitPrice * qty;
+      const total = subtotal - discount;
+      const profit = (unitPrice - p.buy) * qty - discount;
+
+      const sale = {
+        product: p.name, productId, qty, unitPrice, subtotal, discount, total, profit,
+        payment, customer, soldBy: currentUser.user, orgId: currentUser.orgId,
+        date: firebase.firestore.FieldValue.serverTimestamp()
+      };
+
+      return firestoredb.collection('sales').add(sale).then(() => {
+        return firestoredb.collection('products').doc(productId).update({ stock: p.stock - qty });
+      }).then(() => {
+        generateReceipt({ ...sale, date: new Date() });
+        showAlert('Sale completed!', 'success');
+        clearForm(['qty', 'customPrice', 'discount', 'customer']);
+        document.getElementById('productSelect').value = '';
+        updateDashboard();
+      });
+    }).catch(err => showAlert(err.message, 'danger'));
+}
+
+function generateReceipt(sale) {
+  document.getElementById('receipt').textContent = `
+
+       EDDMOBI POS RECEIPT            
+
+Date: ${formatDate(sale.date)}
+Customer: ${sale.customer}
+Sold By: ${sale.soldBy || 'Staff'}
+Payment: ${sale.payment}
+Product: ${sale.product}
+Qty: ${sale.qty} x ${formatCurrency(sale.unitPrice)}
+Subtotal: ${formatCurrency(sale.subtotal)}
+${sale.discount > 0 ? 'Discount: -' + formatCurrency(sale.discount) + '' : ''}
+TOTAL: ${formatCurrency(sale.total)}
+Thank you for your business!
+ 0722540912`;
+}
+
+function renderRecentSales(snapshot) {
+  const table = document.getElementById('recentSalesTable');
+  const perms = PERMISSIONS[currentUser.role] || PERMISSIONS[ROLES.SALES];
+  let html = `<tr><th>Date</th><th>Product</th><th>Qty</th><th>Total</th><th>Sold By</th>${perms.canDeleteSales ? '<th>Action</th>' : ''}</tr>`;
+
+  if (snapshot.size === 0) {
+    const colspan = 5 + (perms.canDeleteSales ? 1 : 0);
+    html += `<tr><td colspan="${colspan}" style="text-align:center;">No sales yet</td></tr>`;
+  } else {
+    snapshot.forEach(doc => {
+      const s = doc.data(), docId = doc.id;
+      const dateStr = s.date ? formatDate(s.date.toDate ? s.date.toDate() : s.date) : 'N/A';
+      html += `<tr><td>${dateStr}</td><td>${s.product || 'N/A'}</td><td>${s.qty || 0}</td><td>${formatCurrency(s.total)}</td><td>${s.soldBy || 'N/A'}</td>${perms.canDeleteSales ? `<td><button class="action-btn delete-btn" onclick="deleteSale('${docId}', '${s.productId}', ${s.qty || 0})">Delete</button></td>` : ''}</tr>`;
+    });
+  }
+  table.innerHTML = html;
+}
+
+function deleteSale(saleId, productId, qty) {
+  if (!checkPermission('canDeleteSales', 'Delete sale')) return;
+  confirmAction = () => {
+    const promises = [];
+    if (productId && qty > 0) {
+      promises.push(firestoredb.collection('products').doc(productId).get().then(doc => {
+        if (doc.exists) return firestoredb.collection('products').doc(productId).update({ stock: (doc.data().stock || 0) + qty });
+      }));
+    }
+    Promise.all(promises).then(() => firestoredb.collection('sales').doc(saleId).delete())
+      .then(() => { updateDashboard(); showAlert('Sale deleted, stock restored', 'success'); })
+      .catch(err => showAlert(err.message, 'danger'));
+  };
+  document.getElementById('confirmMessage').textContent = 'Delete this sale? Stock will be restored.';
+  document.getElementById('confirmModal').classList.add('active');
+}
+
+// ============= EXPENSES =============
+function addExpense() {
+  if (!checkPermission('canAddExpenses', 'Add expense')) return;
+  if (!currentUser || !currentUser.orgId) return;
+  const name = document.getElementById('expenseName').value.trim();
+  const amount = parseFloat(document.getElementById('expenseAmount').value);
+  if (!name) { showAlert('Enter expense description', 'danger'); return; }
+  if (isNaN(amount) || amount <= 0) { showAlert('Enter valid amount', 'danger'); return; }
+
+  firestoredb.collection('expenses').add({
+    name, amount, orgId: currentUser.orgId,
+    date: firebase.firestore.FieldValue.serverTimestamp(),
+    recordedBy: currentUser.user
+  }).then(() => { clearForm(['expenseName', 'expenseAmount']); showAlert('Expense recorded!', 'success'); })
+    .catch(err => showAlert(err.message, 'danger'));
+}
+
+function renderExpenses(snapshot) {
+  const expensesTable = document.getElementById('expensesTable');
+  const perms = PERMISSIONS[currentUser.role] || PERMISSIONS[ROLES.SALES];
+  let html = `<tr><th>Date</th><th>Description</th><th>Amount</th><th>Recorded By</th>${perms.canDeleteExpenses ? '<th>Action</th>' : ''}</tr>`;
+
+  if (snapshot.size === 0) {
+    const colspan = 4 + (perms.canDeleteExpenses ? 1 : 0);
+    html += `<tr><td colspan="${colspan}" style="text-align:center;">No expenses yet</td></tr>`;
+  } else {
+    snapshot.forEach(doc => {
+      const e = doc.data(), docId = doc.id;
+      const dateStr = e.date ? formatDate(e.date.toDate ? e.date.toDate() : e.date) : 'N/A';
+      html += `<tr><td>${dateStr}</td><td>${e.name || 'N/A'}</td><td>${formatCurrency(e.amount)}</td><td>${e.recordedBy || 'N/A'}</td>${perms.canDeleteExpenses ? `<td><button class="action-btn delete-btn" onclick="deleteExpense('${docId}')">Delete</button></td>` : ''}</tr>`;
+    });
+  }
+  expensesTable.innerHTML = html;
+}
+
+function deleteExpense(expenseId) {
+  if (!checkPermission('canDeleteExpenses', 'Delete expense')) return;
+  confirmAction = () => {
+    firestoredb.collection('expenses').doc(expenseId).delete()
+      .then(() => showAlert('Expense deleted!', 'success'))
+      .catch(err => showAlert(err.message, 'danger'));
+  };
+  document.getElementById('confirmMessage').textContent = 'Delete this expense?';
+  document.getElementById('confirmModal').classList.add('active');}
+
+// ============= REPORTS =============
+function generateDailyReport() {
+  if (!hasPermission('canViewReports')) { showAlert('No permission', 'danger'); return; }
+  if (!currentUser || !currentUser.orgId) return;
+  const today = new Date().toDateString(), orgId = currentUser.orgId;
+
+  firestoredb.collection('sales').where('orgId', '==', orgId).get().then(snapshot => {
+    let totalSales = 0, totalProfit = 0, count = 0;
+    snapshot.forEach(doc => {
+      const s = doc.data();
+      const saleDate = s.date ? new Date(s.date.toDate ? s.date.toDate() : s.date).toDateString() : '';
+      if (saleDate === today) { totalSales += s.total || 0; totalProfit += s.profit || 0; count++; }
+    });
+    document.getElementById('output').textContent = `DAILY REPORT - ${new Date().toLocaleDateString('en-KE')}
+Org: ${currentOrg ? currentOrg.name : 'N/A'}
+
+Transactions: ${count}
+Total Sales: ${formatCurrency(totalSales)}
+Profit: ${formatCurrency(totalProfit)}
+
+By: ${currentUser.user}`;
+    showAlert('Daily report generated', 'success');
+  }).catch(err => showAlert(err.message, 'danger'));
+}
+
+function generateMonthlyReport() {
+  if (!hasPermission('canViewReports')) { showAlert('No permission', 'danger'); return; }
+  if (!currentUser || !currentUser.orgId) return;
+  const now = new Date(), currentMonth = now.getMonth(), currentYear = now.getFullYear(), orgId = currentUser.orgId;
+
+  Promise.all([
+    firestoredb.collection('sales').where('orgId', '==', orgId).get(),
+    firestoredb.collection('expenses').where('orgId', '==', orgId).get()
+  ]).then(([salesSnapshot, expensesSnapshot]) => {
+    let totalSales = 0, totalProfit = 0, salesCount = 0;
+    salesSnapshot.forEach(doc => {
+      const s = doc.data(), saleDate = s.date ? new Date(s.date.toDate ? s.date.toDate() : s.date) : null;
+      if (saleDate && saleDate.getMonth() === currentMonth && saleDate.getFullYear() === currentYear) {
+        totalSales += s.total || 0; totalProfit += s.profit || 0; salesCount++;
+      }
+    });
+    let totalExpenses = 0;
+    expensesSnapshot.forEach(doc => {
+      const e = doc.data(), expenseDate = e.date ? new Date(e.date.toDate ? e.date.toDate() : e.date) : null;
+      if (expenseDate && expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear) totalExpenses += e.amount || 0;
+    });
+    const netProfit = totalProfit - totalExpenses;
+    const monthName = new Date(currentYear, currentMonth).toLocaleDateString('en-KE', { month: 'long', year: 'numeric' });
+    document.getElementById('output').textContent = `MONTHLY REPORT - ${monthName}
+Org: ${currentOrg ? currentOrg.name : 'N/A'}
+
+Transactions: ${salesCount}
+Total Sales: ${formatCurrency(totalSales)}
+Gross Profit: ${formatCurrency(totalProfit)}
+Expenses: ${formatCurrency(totalExpenses)}
+NET PROFIT: ${formatCurrency(netProfit)}
+
+By: ${currentUser.user}`;
+    showAlert('Monthly report generated', 'success');
+  }).catch(err => showAlert(err.message, 'danger'));
+}
+
+function generateAnnualReport() {
+  if (!checkPermission('canViewAnnualReport', 'View annual report')) return;
+  if (!currentUser || !currentUser.orgId) return;
+  const currentYear = new Date().getFullYear(), orgId = currentUser.orgId;
+
+  Promise.all([
+    firestoredb.collection('sales').where('orgId', '==', orgId).get(),
+    firestoredb.collection('expenses').where('orgId', '==', orgId).get()
+  ]).then(([salesSnapshot, expensesSnapshot]) => {
+    let totalSales = 0, totalProfit = 0, salesCount = 0;
+    salesSnapshot.forEach(doc => {
+      const s = doc.data(), saleDate = s.date ? new Date(s.date.toDate ? s.date.toDate() : s.date) : null;
+      if (saleDate && saleDate.getFullYear() === currentYear) { totalSales += s.total || 0; totalProfit += s.profit || 0; salesCount++; }
+    });
+    let totalExpenses = 0;
+    expensesSnapshot.forEach(doc => {
+      const e = doc.data(), expenseDate = e.date ? new Date(e.date.toDate ? e.date.toDate() : e.date) : null;
+      if (expenseDate && expenseDate.getFullYear() === currentYear) totalExpenses += e.amount || 0;
+    });
+    document.getElementById('output').textContent = `ANNUAL REPORT - ${currentYear}
+Org: ${currentOrg ? currentOrg.name : 'N/A'}
+
+Transactions: ${salesCount}
+Total Sales: ${formatCurrency(totalSales)}
+Gross Profit: ${formatCurrency(totalProfit)}
+Expenses: ${formatCurrency(totalExpenses)}
+NET PROFIT: ${formatCurrency(totalProfit - totalExpenses)}
+
+By: ${currentUser.user}`;
+    showAlert('Annual report generated', 'success');
+  }).catch(err => showAlert(err.message, 'danger'));
+}
+
+function exportToCSV() {
+  if (!checkPermission('canExportCSV', 'Export data')) return;
+  if (!currentUser || !currentUser.orgId) return;
+  const orgId = currentUser.orgId;
+
+  Promise.all([
+    firestoredb.collection('sales').where('orgId', '==', orgId).get(),
+    firestoredb.collection('expenses').where('orgId', '==', orgId).get()
+  ]).then(([salesSnapshot, expensesSnapshot]) => {
+    let csv = `EDDMOBI POS - DATA EXPORT
+Organization: ${currentOrg ? currentOrg.name : 'N/A'}
+
+SALES DATA
+Date,Product,Quantity,Unit Price,Subtotal,Discount,Total,Profit,Payment,Customer,Sold By
+`;
+    salesSnapshot.forEach(doc => {
+      const s = doc.data();
+      const dateStr = s.date ? formatDate(s.date.toDate ? s.date.toDate() : s.date) : '';
+      csv += `"${dateStr}","${s.product || ''}",${s.qty || 0},${s.unitPrice || 0},${s.subtotal || 0},${s.discount || 0},${s.total || 0},${s.profit || 0},"${s.payment || ''}","${s.customer || ''}","${s.soldBy || ''}"
+`;
+    });
+    csv += `
+EXPENSE DATA
+Date,Description,Amount,Recorded By
+`;
+    expensesSnapshot.forEach(doc => {
+      const e = doc.data();
+      const dateStr = e.date ? formatDate(e.date.toDate ? e.date.toDate() : e.date) : '';
+      csv += `"${dateStr}","${e.name || ''}",${e.amount || 0},"${e.recordedBy || ''}"
+`;
+    });
+    const element = document.createElement('a');
+    element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv));
+    element.setAttribute('download', `eddmobi_export_${new Date().getTime()}.csv`);
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+    showAlert('Data exported to CSV!', 'success');
+  }).catch(err => showAlert(err.message, 'danger'));
+}
+
+// ============= MODALS =============
+function executeConfirm() { if (confirmAction) confirmAction(); cancelConfirm(); }
+function cancelConfirm() { document.getElementById('confirmModal').classList.remove('active'); confirmAction = null; }
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    document.getElementById('confirmModal').classList.remove('active');
+    document.getElementById('editModal').classList.remove('active');
+  }
+});
+
+document.getElementById('confirmModal').addEventListener('click', (e) => { if (e.target === document.getElementById('confirmModal')) cancelConfirm(); });
+document.getElementById('editModal').addEventListener('click', (e) => { if (e.target === document.getElementById('editModal')) closeEditModal(); });
+
+// ============= INIT =============
+document.addEventListener('DOMContentLoaded', () => {
+  debugLog('Page loaded. Waiting for auth state...');
+  showLogin();
+});
+</script>
+
+</body>
+</html>
